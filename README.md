@@ -96,6 +96,21 @@ dig +short www.architected.network      # architected-network.github.io. then th
 curl -sI https://architected.network | head -1   # HTTP/2 200 once the certificate exists
 ```
 
+**If HTTPS never becomes available** — browsers warn that the connection is not private,
+and `curl` reports `no alternative certificate subject name matches` — GitHub is still
+serving its own `*.github.io` certificate. Check which one is served:
+
+```sh
+echo | openssl s_client -connect architected.network:443 -servername architected.network \
+  2>/dev/null | openssl x509 -noout -subject     # CN=*.github.io means not issued yet
+```
+
+GitHub requests the domain's certificate when the custom domain is set. The `CNAME` file
+here was pushed (19 Sep 2026) while DNS still pointed at Squarespace, so that request
+failed and was not retried. To re-trigger it: Settings → Pages → Custom domain →
+**Remove**, then enter `architected.network` again → **Save**. GitHub records the change
+as commits to `CNAME` on `main`, so `git pull` before your next push.
+
 Optionally verify the domain org-wide (GitHub org → Settings → Pages → Add a domain,
 which gives a TXT record to add at Squarespace) so nobody else can claim it for their
 Pages site.
